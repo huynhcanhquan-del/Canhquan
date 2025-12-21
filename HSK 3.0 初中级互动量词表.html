@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>HSK 3.0 初中级互动量词表</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#f5f7fb,#eef2f7);margin:0;padding:28px}
+    h1{text-align:center;margin:0 0 6px;font-weight:600}
+    .subtitle{text-align:center;color:#555;margin-bottom:22px}
+    .card{max-width:1200px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.08);padding:18px 18px 6px}
+    .controls{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .controls-left{display:flex;gap:10px;flex-wrap:wrap}
+    input,select{padding:9px 12px;border-radius:10px;border:1px solid #d0d7e2;font-size:14px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 10px;border-bottom:1px solid #edf0f5;vertical-align:top}
+    th{background:#f4f6fa;font-weight:600}
+    tr:hover{background:#fafcff}
+    .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;background:#e8f0ff;color:#1d4ed8}
+    .cls{font-size:20px;font-weight:600}
+    .py{color:#6b7280;font-size:13px}
+    .vi{color:#065f46;font-size:14px}
+    .audio{cursor:pointer;color:#2563eb;font-size:16px}
+    .audio:hover{color:#1e40af}
+  </style>
+</head>
+<body>
+
+<h1>HSK 3.0 初中级互动量词表</h1>
+<div class="subtitle">基于论文语料库 · 含量词与例句拼音、越南语释义与朗读</div>
+
+<div class="card">
+  <div class="controls">
+    <div class="controls-left">
+      <input id="search" placeholder="搜索量词 / 例句" />
+      <select id="levelFilter">
+        <option value="">全部等级</option>
+        <option>HSK 1</option><option>HSK 2</option><option>HSK 3</option><option>HSK 4</option>
+      </select>
+    </div>
+  </div>
+
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th>量词</th>
+        <th>类型</th>
+        <th>标准等级</th>
+        <th>例句</th>
+        <th>拼音</th>
+        <th>越南语解释</th>
+        <th>读音</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const data = [
+  {w:'本', wpy:'běn', t:'名量词', l:'HSK 1', s:'桌子上有一个电脑和一本书。', spy:'Zhuōzi shàng yǒu yí gè diànnǎo hé yì běn shū.', vi:'Dùng cho sách, vở, tài liệu in đóng quyển.'},
+  {w:'个', wpy:'gè', t:'名量词', l:'HSK 1', s:'这个字怎么写？', spy:'Zhè ge zì zěnme xiě?', vi:'Lượng từ thông dụng, dùng cho người và sự vật nói chung.'},
+  {w:'杯', wpy:'bēi', t:'名量词', l:'HSK 1', s:'我想买一个杯子。', spy:'Wǒ xiǎng mǎi yí gè bēizi.', vi:'Dùng cho đồ uống đựng trong cốc/chén.'},
+  {w:'家', wpy:'jiā', t:'名量词', l:'HSK 1', s:'我家有三口人。', spy:'Wǒ jiā yǒu sān kǒu rén.', vi:'Dùng cho gia đình, cơ sở kinh doanh.'},
+  {w:'间', wpy:'jiān', t:'名量词', l:'HSK 1', s:'这是我的房间。', spy:'Zhè shì wǒ de fángjiān.', vi:'Dùng cho phòng, gian nhà.'},
+  {w:'件', wpy:'jiàn', t:'名量词', l:'HSK 2', s:'这是一件很重要的事。', spy:'Zhè shì yí jiàn hěn zhòngyào de shì.', vi:'Dùng cho sự việc, quần áo.'},
+  {w:'条', wpy:'tiáo', t:'名量词', l:'HSK 2', s:'这是一条很长的路。', spy:'Zhè shì yì tiáo hěn cháng de lù.', vi:'Dùng cho vật dài, mảnh.'},
+  {w:'次', wpy:'cì', t:'动量词', l:'HSK 2', s:'这是我第一次来中国。', spy:'Zhè shì wǒ dì-yī cì lái Zhōngguó.', vi:'Dùng cho số lần của hành động.'},
+  {w:'位', wpy:'wèi', t:'名量词', l:'HSK 2', s:'那位老师很好。', spy:'Nà wèi lǎoshī hěn hǎo.', vi:'Lượng từ kính trọng, dùng cho người.'},
+  {w:'双', wpy:'shuāng', t:'名量词', l:'HSK 2', s:'我买了一双鞋。', spy:'Wǒ mǎi le yì shuāng xié.', vi:'Dùng cho vật có đôi.'},
+  {w:'种', wpy:'zhǒng', t:'名量词', l:'HSK 3', s:'这是一种新的方法。', spy:'Zhè shì yì zhǒng xīn de fāngfǎ.', vi:'Dùng cho chủng loại.'},
+  {w:'遍', wpy:'biàn', t:'动量词', l:'HSK 3', s:'请你再读一遍。', spy:'Qǐng nǐ zài dú yí biàn.', vi:'Dùng cho hành động từ đầu đến cuối.'},
+  {w:'辆', wpy:'liàng', t:'名量词', l:'HSK 3', s:'门口停着一辆车。', spy:'Ménkǒu tíng zhe yí liàng chē.', vi:'Dùng cho xe cộ.'},
+  {w:'场', wpy:'chǎng', t:'名量词', l:'HSK 3', s:'我们看了一场电影。', spy:'Wǒmen kàn le yì chǎng diànyǐng.', vi:'Dùng cho sự kiện.'},
+  {w:'片', wpy:'piàn', t:'名量词', l:'HSK 3', s:'窗外是一片树林。', spy:'Chuāngwài shì yí piàn shùlín.', vi:'Dùng cho diện tích.'},
+  {w:'层', wpy:'céng', t:'名量词', l:'HSK 2', s:'他住在三层。', spy:'Tā zhù zài sān céng.', vi:'Dùng cho tầng/lớp.'},
+  {w:'套', wpy:'tào', t:'名量词', l:'HSK 3', s:'他买了一套房子。', spy:'Tā mǎi le yí tào fángzi.', vi:'Dùng cho bộ hoàn chỉnh.'},
+  {w:'座', wpy:'zuò', t:'名量词', l:'HSK 4', s:'那是一座很高的山。', spy:'Nà shì yí zuò hěn gāo de shān.', vi:'Dùng cho núi, công trình lớn.'}
+];
+
+const tbody=document.querySelector('#tbl tbody');
+const search=document.getElementById('search');
+const level=document.getElementById('levelFilter');
+
+function speak(txt){const u=new SpeechSynthesisUtterance(txt);u.lang='zh-CN';speechSynthesis.speak(u)}
+
+function render(){tbody.innerHTML='';data.filter(d=>{const k=search.value.trim();const lv=level.value;return(!k||d.w.includes(k)||d.s.includes(k))&&(!lv||d.l===lv)}).forEach(d=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><div class='cls'>${d.w}</div><div class='py'>${d.wpy}</div><div class='audio' onclick="speak('${d.w}')">🔊 量词读音</div></td><td>${d.t}</td><td><span class='tag'>${d.l}</span></td><td>${d.s}</td><td class='py'>${d.spy}</td><td class='vi'>${d.vi}</td><td><span class='audio' onclick="speak('${d.w}')">🔊</span> <span class='audio' onclick="speak('${d.s}')">▶︎</span></td>`;
+  tbody.appendChild(tr);
+})}
+search.addEventListener('input',render);level.addEventListener('change',render);render();
+</script>
+</body>
+</html>

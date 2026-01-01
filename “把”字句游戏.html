@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>帮我整理房间 — 拖拽练习（数字 MP3）</title>
+<style>
+  /* 样式保持和之前一致，可直接复制前面版本 */
+  :root{--bg-start:#e8fbf3;--bg-end:#eefef9;--accent:#2ea8a6;--accent-2:#97e6df;--success:#27ae60;--wrong:#e74c3c;--card-bg: rgba(255,255,255,0.96);--shadow:0 10px 30px rgba(0,0,0,0.12);}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:"Noto Sans SC","Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,var(--bg-start),var(--bg-end));-webkit-font-smoothing:antialiased}
+  .stage{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 20px;}
+  header{text-align:center;color:#0b3f3d}
+  h1{margin:0;font-size:30px}
+  .score{margin-top:10px;display:inline-flex;align-items:center;gap:10px;background:var(--card-bg);padding:8px 14px;border-radius:999px;box-shadow:var(--shadow);color:#0b3f3e;font-weight:700;}
+  main.game{width: min(1300px, 96%);display:grid;grid-template-columns: 1fr 420px;gap:28px;margin-top:22px;align-items:start;}
+  .places-wrap{padding:18px;border-radius:18px;background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));box-shadow:var(--shadow);min-height:560px;}
+  .places-title{font-size:18px;color:#074442;font-weight:800;margin-bottom:10px}
+  .places-grid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+  .dropzone{width:230px;min-height:160px;border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;border:3px dashed rgba(7,64,62,0.08);transition:transform .14s,border-color .14s,box-shadow .14s;}
+  .dropzone:hover{ transform:translateY(-6px); border-color: var(--accent-2); box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+  .dropzone img{ width:96px; height:96px; object-fit:contain; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.08)); }
+  .dropzone .name{ font-weight:900; color:#0b3f3d; font-size:16px; }
+  .objects-wrap{padding:18px;border-radius:18px;background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));box-shadow:var(--shadow);}
+  .objects-title{font-size:18px;color:#074442;font-weight:800;margin-bottom:10px}
+  .objects-list{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+  .card{display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:linear-gradient(180deg,#fff,#f8fffd);box-shadow:0 8px 18px rgba(0,0,0,0.06);cursor:grab; transition:transform .12s;}
+  .card:hover{ transform:translateY(-6px); }
+  .card img{ width:84px; height:84px; object-fit:contain }
+  .meta{ display:flex; flex-direction:column }
+  .meta .name{ font-weight:900; color:#0b3f3d; font-size:18px }
+  .meta .hint{ color:#0a6b68; font-size:13px }
+  .controls{ display:flex; gap:12px; align-items:center; margin-top:14px; }
+  .sentence{ flex:1; background:var(--card-bg); padding:12px 14px; border-radius:12px; box-shadow:var(--shadow); font-weight:800; color:#063b3a; font-size:18px; }
+  .btn{ background:var(--accent); color:#fff; border:none; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,0.08) }
+  .btn.secondary{ background:#f3f4f6; color:#0b3f3d }
+  .result{ margin-top:12px; font-weight:900; color:#044b48; min-height:22px }
+  @media (max-width:980px){
+    main.game{ grid-template-columns: 1fr; }
+    .dropzone{ width:46%; min-height:130px }
+    .card img{ width:64px; height:64px }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <header>
+    <h1>帮我整理房间 🏠（把字句 · 拖拽练习）</h1>
+    <div class="score">得分：<strong id="score">0</strong> / 5 ⭐</div>
+  </header>
+  <main class="game">
+    <section class="places-wrap">
+      <div class="places-title">图片（把汉字拖到对应图片上）</div>
+      <div class="places-grid" id="placesGrid"></div>
+      <div class="controls">
+        <div class="sentence" id="sentence"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn secondary" id="playSentence">🔊 播放句子</button>
+          <button class="btn" id="shuffleBtn">重新打乱</button>
+          <button class="btn" id="nextBtn" style="display:none">下一题 ▶</button>
+        </div>
+      </div>
+      <div class="result" id="resultText"></div>
+    </section>
+    <aside class="objects-wrap">
+      <div class="objects-title">文字（拖动这些汉字到对应图片）</div>
+      <div class="objects-list" id="objectsList"></div>
+      <div style="height:8px"></div>
+      <div style="font-size:13px;color:#0a6b68;text-align:center">练习把字句：把 + 名词 + 放在/挂在 + 地点</div>
+    </aside>
+  </main>
+</div>
+
+<script>
+const sentences = [
+  { text: "把书放在书包里。", object: "书", place: "书包" },
+  { text: "把鱼放在冰箱里。", object: "鱼", place: "冰箱" },
+  { text: "把鞋子放在鞋架上。", object: "鞋子", place: "鞋架" },
+  { text: "把衣服放在衣柜里。", object: "衣服", place: "衣柜" },
+  { text: "把图挂在墙上。", object: "图", place: "墙" }
+];
+
+const placesData = [
+  { name: "书包", img: "bookbag.png" },
+  { name: "冰箱", img: "fridge.png" },
+  { name: "鞋架", img: "shoerack.png" },
+  { name: "衣柜", img: "closet.png" },
+  { name: "墙",   img: "wall.png" }
+];
+
+const objectsData = [
+  { name: "书", img: "book.png" },
+  { name: "鱼", img: "fish.png" },
+  { name: "鞋子", img: "shoe.png" },
+  { name: "衣服", img: "clothes.png" },
+  { name: "图", img: "picture.png" }
+];
+
+const audioFiles = ['0.mp3','1.mp3','2.mp3','3.mp3','4.mp3'];
+let current=0, score=0, dragged=null;
+const soundCorrect = new Audio('correct.mp3');  
+const soundWrong   = new Audio('wrong.mp3');    
+
+function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
+
+function renderAll(){
+  renderSentence();
+  renderPlaces();
+  renderObjects();
+  document.getElementById('resultText').innerText = '';
+  document.getElementById('nextBtn').style.display = 'none';
+  updateScore();
+}
+
+function renderSentence(){
+  document.getElementById('sentence').innerText = "请听题：" + sentences[current].text;
+}
+
+function renderPlaces(){
+  const grid=document.getElementById('placesGrid'); grid.innerHTML='';
+  shuffle(placesData).forEach(p=>{
+    const el=document.createElement('div');
+    el.className='dropzone'; el.dataset.name=p.name;
+    el.innerHTML=`<img src="${p.img}" alt="${p.name}" onerror="this.style.border='2px solid red'; this.nextSibling.innerText='图片未找到'"><div class="name">${p.name}</div>`;
+    grid.appendChild(el);
+  });
+  attachDropHandlers();
+}
+
+function renderObjects(){
+  const box=document.getElementById('objectsList'); box.innerHTML='';
+  shuffle(objectsData).forEach(o=>{
+    const el=document.createElement('div');
+    el.className='card'; el.draggable=true; el.dataset.name=o.name;
+    el.innerHTML=`<img src="${o.img}" alt="${o.name}" onerror="this.style.border='2px solid red'; this.nextSibling.innerText='图片未找到'"><div class="meta"><div class="name">${o.name}</div><div class="hint">拖到对应图片</div></div>`;
+    box.appendChild(el);
+  });
+  attachDragHandlers();
+}
+
+function attachDragHandlers(){
+  document.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('dragstart',e=>{ dragged=e.currentTarget.dataset.name; e.currentTarget.style.opacity='0.6'; });
+    card.addEventListener('dragend',e=>{ dragged=null; e.currentTarget.style.opacity='1'; });
+  });
+}
+
+function attachDropHandlers(){
+  document.querySelectorAll('.dropzone').forEach(zone=>{
+    zone.addEventListener('dragover',e=>e.preventDefault());
+    zone.addEventListener('drop',e=>{ e.preventDefault(); handleDrop(dragged,zone.dataset.name,zone); });
+  });
+}
+
+function handleDrop(obj,place,el){
+  if(!obj) return;
+  let c=sentences[current];
+  if(obj===c.object && place===c.place){
+    el.style.borderColor='var(--success)'; soundCorrect.play(); score++; updateScore();
+    document.getElementById('resultText').innerText='✅ 正确！';
+    setTimeout(()=>document.getElementById('nextBtn').click(),600);
+  }else{
+    el.style.borderColor='var(--wrong)'; soundWrong.play();
+    document.getElementById('resultText').innerText='❌ 错了！';
+    setTimeout(()=>document.getElementById('nextBtn').click(),600);
+  }
+}
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  current++; if(current>=sentences.length){
+    document.getElementById('sentence').innerText=`🎉 游戏结束！得分：${score} / ${sentences.length}`;
+    document.getElementById('shuffleBtn').innerText='再玩一次';
+    return;
+  }
+  renderAll();
+});
+
+document.getElementById('shuffleBtn').addEventListener('click', ()=>{
+  current=0; score=0; renderAll();
+});
+
+document.getElementById('playSentence').addEventListener('click', ()=>{
+  const audio = new Audio(audioFiles[current]);
+  audio.play().catch(e=>console.log('音频播放失败', e));
+});
+
+function updateScore(){ document.getElementById('score').innerText=score; }
+renderAll();
+</script>
+</body>
+</html>

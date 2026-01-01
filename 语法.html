@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>雄过河游戏</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: url('a.png') no-repeat center center fixed;
+        background-size: cover;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        color: black;
+    }
+    #score {
+        font-size: 50px;
+        margin: 20px;
+    }
+    #hearts {
+        font-size: 30px;
+        margin: 10px;
+    }
+    #restartBtn {
+        font-size: 24px;
+        padding: 10px 20px;
+        display: none;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    #bridges {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.0000004cm; /* 极小间距 */
+        margin: 20px 0;
+    }
+    .bridge-container {
+        position: relative;
+        width: 300px;
+    }
+    .bridge {
+        width: 100%;
+    }
+    .card {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 50px;
+        background-color: white;
+        border: 2px solid black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        cursor: pointer;
+        user-select: none;
+    }
+    #question {
+        margin-top: 20px;
+        font-size: 24px;
+    }
+    #message {
+        margin-top: 20px;
+        font-size: 28px;
+        color: red;
+    }
+</style>
+</head>
+<body>
+
+<div id="score">分数: 0</div>
+<div id="hearts">♥️♥️♥️</div>
+<button id="restartBtn" onclick="restartGame()">再次挑战</button>
+
+<div id="bridges">
+    <div class="bridge-container">
+        <img src="b.png" class="bridge" id="bridge1">
+        <div class="card" onclick="selectAnswer('的', 0)">的</div>
+    </div>
+    <div class="bridge-container">
+        <img src="b.png" class="bridge" id="bridge2">
+        <div class="card" onclick="selectAnswer('地', 1)">地</div>
+    </div>
+    <div class="bridge-container">
+        <img src="b.png" class="bridge" id="bridge3">
+        <div class="card" onclick="selectAnswer('得', 2)">得</div>
+    </div>
+</div>
+
+<div id="question"></div>
+<div id="message"></div>
+
+<script>
+const questions = [
+    { sentence: "他跑步跑___非常快。", answer: "得" },
+    { sentence: "她开心___笑了起来。", answer: "地" },
+    { sentence: "这是我最喜欢___书籍。", answer: "的" },
+    { sentence: "小明仔细___听讲，取得了好成绩。", answer: "地" },
+    { sentence: "古老___城市吸引了很多游客。", answer: "的" },
+    { sentence: "老师严厉___批评了错误行为。", answer: "地" },
+    { sentence: "漂亮___花朵让人心情愉快。", answer: "的" },
+    { sentence: "小小___鱼儿水中游泳。", answer: "的" },
+    { sentence: "清清___河水向东流。", answer: "的" },
+    { sentence: "学生应该专心___上课不大意。", answer: "地" },
+    { sentence: "昨天，我睡___太晚，所以今早睡过头了。", answer: "得" },
+    { sentence: "果树渐渐___绿了。", answer: "地" },
+    { sentence: "小明在儿童公园玩___很开心。", answer: "得" },
+    { sentence: "向日葵在微风中向我们轻轻___点头微笑。", answer: "地" }
+];
+
+let currentQuestionIndex = 0;
+let score = 0;
+let hearts = 3;
+let gameOver = false;
+
+// 显示题目
+function showQuestion() {
+    if (currentQuestionIndex >= questions.length || score >= 100) {
+        document.getElementById("message").textContent = "恭喜你成功过河🎉";
+        document.getElementById("restartBtn").style.display = "inline-block";
+        gameOver = true;
+        return;
+    }
+    document.getElementById("question").textContent = questions[currentQuestionIndex].sentence;
+}
+
+// 玩家选择答案
+function selectAnswer(selected, cardIndex) {
+    if (gameOver) return;
+    const correct = questions[currentQuestionIndex].answer;
+    const bridgeId = 'bridge' + (cardIndex + 1);
+    if (selected === correct) {
+        document.getElementsByClassName('card')[cardIndex].style.backgroundColor = 'green';
+        score += 10;
+        document.getElementById("score").textContent = "分数: " + score;
+        currentQuestionIndex++;
+        setTimeout(() => {
+            resetCards();
+            showQuestion();
+            document.getElementById("message").textContent = "";
+        }, 500);
+    } else {
+        document.getElementsByClassName('card')[cardIndex].style.backgroundColor = 'red';
+        document.getElementById(bridgeId).src = 'c.png'; // 桥塌
+        hearts--;
+        updateHearts();
+        document.getElementById("message").textContent = "选错了！桥塌了！";
+        
+        if (hearts <= 0) {
+            document.getElementById("message").textContent = "游戏结束！";
+            document.getElementById("restartBtn").style.display = "inline-block";
+            gameOver = true;
+            return;
+        }
+
+        // 桥塌 2秒后恢复
+        setTimeout(() => {
+            document.getElementById(bridgeId).src = 'b.png';
+            resetCards();
+            document.getElementById("message").textContent = "";
+        }, 2000);
+    }
+}
+
+// 重置卡片颜色
+function resetCards() {
+    const cards = document.getElementsByClassName('card');
+    for (let card of cards) {
+        card.style.backgroundColor = 'white';
+    }
+}
+
+// 更新红心显示
+function updateHearts() {
+    let heartStr = '';
+    for (let i = 0; i < hearts; i++) heartStr += '♥️';
+    document.getElementById("hearts").textContent = heartStr;
+}
+
+// 重新挑战
+function restartGame() {
+    score = 0;
+    hearts = 3;
+    currentQuestionIndex = 0;
+    gameOver = false;
+    document.getElementById("score").textContent = "分数: " + score;
+    document.getElementById("message").textContent = "";
+    document.getElementById("restartBtn").style.display = "none";
+    updateHearts();
+    resetCards();
+    // 将所有桥恢复正常状态
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById('bridge' + i).src = 'b.png';
+    }
+    showQuestion();
+}
+
+// 初始化
+updateHearts();
+showQuestion();
+</script>
+
+</body>
+</html>

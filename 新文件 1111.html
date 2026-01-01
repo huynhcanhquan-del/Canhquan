@@ -1,0 +1,237 @@
+
+Điểm nổi bật trong thư mục
+Tài liệu HTML tạo trò chơi học từ vựng tiếng Trung, bao gồm năm cụm từ hàng ngày và sử dụng hình ảnh cây trồng để biểu thị tiến trình.
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>复习日常用语🍎种苹果树</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Microsoft Yahei", sans-serif;
+    text-align: center;
+    background: url("beijing.png") no-repeat center center / cover;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  h1 {
+    margin-top: 20px;
+    font-size: 2em;
+    color: #2c3e50;
+    text-shadow: 1px 1px 3px white;
+  }
+
+  #playBtn, #restartBtn {
+    background: #ff9800;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  #playBtn:hover, #restartBtn:hover {
+    transform: scale(1.05);
+    background: #ffa726;
+  }
+
+  #status {
+    font-size: 1.2em;
+    margin: 10px;
+    color: #333;
+    text-shadow: 1px 1px 1px #fff;
+  }
+
+  #game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #pot {
+    height: 250px;
+    transition: transform 0.5s;
+    margin-top: 10px;
+  }
+
+  #cards {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .card {
+    background: white;
+    border: 3px solid black;
+    border-radius: 12px;
+    width: 120px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: transform 0.3s, background 0.3s;
+  }
+
+  .card:hover {
+    background: #fff7d6;
+    transform: scale(1.1);
+  }
+
+  .card.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  #message {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 20px;
+  }
+
+  .wrong {
+    color: red;
+    text-shadow: 1px 1px 2px white;
+  }
+
+  .success {
+    color: gold;
+    text-shadow: 0 0 10px gold;
+  }
+
+  #restartBtn {
+    margin-top: 20px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+  <h1>复习日常用语🍎种苹果树</h1>
+
+  <button id="playBtn">▶ 播放</button>
+  <div id="status">请听并点击正确的插图</div>
+
+  <div id="game-area">
+    <img id="pot" src="pot1.png" alt="花盆" />
+    <div id="cards">
+      <div class="card">对不起</div>
+      <div class="card">没关系</div>
+      <div class="card">谢谢</div>
+      <div class="card">不客气</div>
+      <div class="card">再见</div>
+    </div>
+    <div id="message"></div>
+    <button id="restartBtn">🔁 再次挑战</button>
+  </div>
+
+<script>
+  const words = ["对不起", "没关系", "谢谢", "不客气", "再见"];
+  let remainingWords = [...words];
+  let currentWord = "";
+  let correctCount = 0;
+
+  const playBtn = document.getElementById("playBtn");
+  const pot = document.getElementById("pot");
+  const status = document.getElementById("status");
+  const message = document.getElementById("message");
+  const restartBtn = document.getElementById("restartBtn");
+  const cards = document.querySelectorAll(".card");
+
+  // 播放词语语音
+  function playWord(word) {
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = "zh-CN";
+    utter.rate = 0.9;
+    speechSynthesis.speak(utter);
+  }
+
+  // 播放按钮
+  playBtn.addEventListener("click", () => {
+    if (remainingWords.length === 0) {
+      status.textContent = "所有词都听过啦！";
+      return;
+    }
+    message.textContent = "";
+    message.className = "";
+    const index = Math.floor(Math.random() * remainingWords.length);
+    currentWord = remainingWords[index];
+    playWord(currentWord);
+    status.textContent = "请听并点击正确的插图";
+  });
+
+  // 点击卡片判断
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      if (!currentWord) return;
+
+      if (card.textContent === currentWord) {
+        // 答对了
+        correctCount++;
+        status.textContent = "答对了！";
+        status.className = "";
+        pot.style.transform = "scale(1.05)";
+        setTimeout(() => pot.style.transform = "scale(1)", 300);
+
+        // 卡片消失（进花盆）
+        card.classList.add("disabled");
+        card.style.transform = "translateY(100px)";
+        card.style.transition = "transform 0.8s ease";
+
+        // 树的生长阶段
+        if (correctCount === 1 || correctCount === 2 || correctCount === 3) pot.src = "pot2.png";
+        if (correctCount === 4) pot.src = "pot3.png";
+        if (correctCount === 5) {
+          pot.src = "pot4.png";
+          message.textContent = "🎉 恭喜你种出了苹果！🍎";
+          message.className = "success";
+          status.textContent = "游戏结束！";
+          playWord("恭喜你种出了苹果！");
+          playBtn.disabled = true;
+          restartBtn.style.display = "inline-block";
+          return;
+        }
+
+        // 从待选列表中移除当前词
+        remainingWords = remainingWords.filter(w => w !== currentWord);
+        currentWord = "";
+
+      } else {
+        // 答错了
+        status.textContent = "错了";
+        status.className = "wrong";
+        pot.style.transform = "scale(0.95)";
+        setTimeout(() => pot.style.transform = "scale(1)", 300);
+      }
+    });
+  });
+
+  // 再次挑战按钮
+  restartBtn.addEventListener("click", () => {
+    correctCount = 0;
+    remainingWords = [...words];
+    currentWord = "";
+    pot.src = "pot1.png";
+    message.textContent = "";
+    message.className = "";
+    restartBtn.style.display = "none";
+    status.textContent = "请听并点击正确的插图";
+    playBtn.disabled = false;
+    cards.forEach(card => {
+      card.classList.remove("disabled");
+      card.style.transform = "translateY(0)";
+    });
+  });
+</script>
+</body>
+</html>
